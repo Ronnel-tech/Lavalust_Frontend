@@ -29,32 +29,36 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="card auth">
-      <h1>{mode === 'login' ? 'Login' : 'Create account'}</h1>
-      {error && <div className="alert error">{error}</div>}
-      {notice && <div className="alert success">{notice}</div>}
-
-      <form onSubmit={submit}>
-        <label>Username
-          <input value={form.username} onChange={set('username')} required autoFocus />
-        </label>
-        {mode === 'register' && (
-          <label>Email
-            <input type="email" value={form.email} onChange={set('email')} required />
-          </label>
-        )}
-        <label>Password
-          <input type="password" value={form.password} onChange={set('password')} required minLength={6} />
-        </label>
-        <button disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Login' : 'Register'}</button>
-      </form>
-
-      <p className="muted">
-        {mode === 'login' ? 'No account yet? ' : 'Already registered? '}
-        <a href="#" onClick={(e) => { e.preventDefault(); setError(''); setMode(mode === 'login' ? 'register' : 'login'); }}>
-          {mode === 'login' ? 'Register' : 'Login'}
-        </a>
-      </p>
-    </div>
+    <main className="auth-page">
+      <section className="auth-visual">
+        <div className="brand"><div className="brand-mark">P</div><div><div className="brand-name">Pallet &amp; Pine</div><div className="brand-caption">Stockroom</div></div></div>
+        <div className="auth-message">
+          <div className="auth-kicker">Product management system</div>
+          <h1>Good stock.<br />Good business.</h1>
+          <p>Your product catalog, quantities, and stock value together in one calm workspace.</p>
+        </div>
+        <div className="auth-footer">INVENTORY CONTROL · BUILT FOR YOUR TEAM</div>
+      </section>
+      <section className="auth-panel">
+        <div className="auth-form-wrap">
+          <div className="eyebrow">Stockroom access</div>
+          <h2>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
+          <p className="auth-intro">{mode === 'login' ? 'Sign in to view and manage your product catalog.' : 'Register for a viewer account to access the catalog.'}</p>
+          <div className="auth-switch" role="tablist" aria-label="Account access">
+            <button type="button" className={mode === 'login' ? 'active' : ''} role="tab" aria-selected={mode === 'login'} onClick={() => { setError(''); setNotice(''); setMode('login'); }}>Sign in</button>
+            <button type="button" className={mode === 'register' ? 'active' : ''} role="tab" aria-selected={mode === 'register'} onClick={() => { setError(''); setNotice(''); setMode('register'); }}>Register</button>
+          </div>
+          {error && <div className="alert error" role="alert">{error}</div>}
+          {notice && <div className="alert success" role="status">{notice}</div>}
+          <form className="auth-form" onSubmit={submit}>
+            <label>Username<input value={form.username} onChange={set('username')} required autoFocus /></label>
+            {mode === 'register' && <label>Email address<input type="email" value={form.email} onChange={set('email')} required /></label>}
+            <label>Password<input type="password" value={form.password} onChange={set('password')} required minLength={6} /></label>
+            <button className="auth-submit" disabled={busy}>{busy ? 'Please wait...' : mode === 'login' ? 'Sign in to stockroom' : 'Create viewer account'}</button>
+          </form>
+          <p className="auth-footnote">{mode === 'register' ? 'New accounts have view-only access.' : 'Need an account? '} {mode === 'login' && <a href="#register" onClick={(event) => { event.preventDefault(); setError(''); setMode('register'); }}>Register here</a>}</p>
+        </div>
+      </section>
+    </main>
   );
 }

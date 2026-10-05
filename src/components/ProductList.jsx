@@ -10,6 +10,7 @@ export default function ProductList({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [query, setQuery] = useState('');
   const [formFor, setFormFor] = useState(null); // null = closed, {} = add, product = edit
 
   const load = useCallback(async () => {
@@ -43,64 +44,103 @@ export default function ProductList({ user, onLogout }) {
     load();
   };
 
+  const visibleProducts = products.filter((product) => {
+    const search = query.trim().toLowerCase();
+    return !search || `${product.product_name} ${product.description} ${product.id}`.toLowerCase().includes(search);
+  });
+  const totalUnits = products.reduce((total, product) => total + Number(product.quantity || 0), 0);
+  const inventoryValue = products.reduce((total, product) => total + Number(product.price || 0) * Number(product.quantity || 0), 0);
+  const initials = user.username.slice(0, 2);
+  const today = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date());
+
   return (
-    <div className="container">
-      <header>
-        <h1>Products</h1>
-        <div className="header-right">
-          <span className="muted">Signed in as <strong>{user.username}</strong></span>
-          <button className="secondary" onClick={onLogout}>Logout</button>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">P</div>
+          <div><div className="brand-name">Pallet &amp; Pine</div><div className="brand-caption">Stockroom</div></div>
         </div>
-      </header>
+        <div className="nav-label">Workspace</div>
+        <nav className="side-nav" aria-label="Main navigation">
+          <a className="nav-item active" href="#inventory"><span className="nav-glyph">▦</span>Inventory</a>
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="sidebar-note">
+            <div className="note-tag">Stockroom note</div>
+            <p className="note-copy">Keep every item accounted for. Your inventory is ready when you are.</p>
+          </div>
+        </div>
+      </aside>
 
-      {error && <div className="alert error">{error}</div>}
-      {notice && <div className="alert success" onClick={() => setNotice('')}>{notice}</div>}
+      <main className="workspace" id="inventory">
+        <div className="topbar">
+          <div className="topbar-right">
+            <span className="top-date">{today}</span>
+            <div className="user-chip">
+              <div className="avatar">{initials}</div>
+              <div><div className="user-name">{user.username}</div><div className="user-role">{user.role}</div></div>
+            </div>
+            <button className="logout-button" onClick={onLogout}>Sign out</button>
+          </div>
+        </div>
 
-      <div className="toolbar">
-        {isAdmin && <button onClick={() => setFormFor({})}>+ Add product</button>}
-      </div>
+        <div className="page-content">
+          <div className="heading-row">
+            <div>
+              <div className="eyebrow">Stockroom / Catalog</div>
+              <h1 className="page-heading">Inventory</h1>
+              <p className="page-subtitle">A clear view of everything in your product catalog.</p>
+            </div>
+            {isAdmin && <button className="button-primary" onClick={() => setFormFor({})}><span className="button-plus">+</span> Add product</button>}
+          </div>
 
-      <div className="card table-wrap">
-        {loading ? <p className="center">Loading…</p> : (
-          <table>
-            <thead>
-              <tr>
-                <th>#</th><th>Name</th><th>Description</th><th className="num">Price</th><th className="num">Qty</th><th>Created</th>
-                {isAdmin && <th>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 && (
-                <tr><td colSpan={isAdmin ? 7 : 6} className="center muted">No products yet.</td></tr>
+          <section className="summary-grid" aria-label="Inventory summary">
+            <article className="summary-card"><div className="summary-label">Catalog items<span className="summary-mark">▦</span></div><div className="summary-value">{products.length}<span className="summary-foot">products</span></div></article>
+            <article className="summary-card"><div className="summary-label">Units in stock<span className="summary-mark">↗</span></div><div className="summary-value">{totalUnits.toLocaleString()}</div></article>
+            <article className="summary-card"><div className="summary-label">Stock value<span className="summary-mark">₱</span></div><div className="summary-value">{peso.format(inventoryValue)}</div></article>
+          </section>
+
+          {error && <div className="alert error" role="alert">{error}</div>}
+          {notice && <div className="alert success" role="status" onClick={() => setNotice('')}>{notice}</div>}
+
+          <section className="catalog-section" aria-labelledby="catalog-title">
+            <div className="section-heading">
+              <h2 className="section-title" id="catalog-title">Product catalog<span className="section-count">{visibleProducts.length} shown</span></h2>
+              <div className="catalog-tools">
+                <label className="search-box"><span className="search-glyph" aria-hidden="true">⌕</span><span className="sr-only">Search products</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products..." /></label>
+                {!isAdmin && <span className="role-pill">View only</span>}
+              </div>
+            </div>
+
+            <div className="catalog-card">
+              {loading ? <div className="loading-state">Loading inventory...</div> : (
+                <div className="table-scroll">
+                  <table>
+                    <thead><tr><th>Item</th><th>Product</th><th>Description</th><th>Unit price</th><th>In stock</th><th>Added</th>{isAdmin && <th aria-label="Actions"></th>}</tr></thead>
+                    <tbody>
+                      {visibleProducts.length === 0 ? (
+                        <tr><td colSpan={isAdmin ? 7 : 6}><div className="empty-state"><div className="empty-icon">⌕</div>{query ? 'No products match your search.' : 'There are no products in the catalog yet.'}</div></td></tr>
+                      ) : visibleProducts.map((product) => (
+                        <tr key={product.id}>
+                          <td className="product-id">#{String(product.id).padStart(3, '0')}</td>
+                          <td><span className="product-name">{product.product_name}</span></td>
+                          <td><div className="product-description" title={product.description}>{product.description || '—'}</div></td>
+                          <td className="price-cell">{peso.format(product.price)}</td>
+                          <td><span className="quantity-value">{Number(product.quantity).toLocaleString()}</span></td>
+                          <td className="date-cell">{product.created_at || '—'}</td>
+                          {isAdmin && <td className="actions-cell"><button className="icon-button" aria-label={`Edit ${product.product_name}`} title="Edit" onClick={() => setFormFor(product)}>Edit</button><button className="icon-button delete" aria-label={`Delete ${product.product_name}`} title="Delete" onClick={() => handleDelete(product)}>Delete</button></td>}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
-              {products.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td><strong>{p.product_name}</strong></td>
-                  <td className="muted">{p.description}</td>
-                  <td className="num">{peso.format(p.price)}</td>
-                  <td className="num">{p.quantity}</td>
-                  <td className="muted">{p.created_at}</td>
-                  {isAdmin && (
-                    <td className="actions">
-                      <button className="secondary small" onClick={() => setFormFor(p)}>Edit</button>
-                      <button className="danger small" onClick={() => handleDelete(p)}>Delete</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            </div>
+          </section>
+        </div>
+      </main>
 
-      {isAdmin && formFor && (
-        <ProductForm
-          product={formFor.id ? formFor : null}
-          onSaved={handleSaved}
-          onCancel={() => setFormFor(null)}
-        />
-      )}
+      {isAdmin && formFor && <ProductForm product={formFor.id ? formFor : null} onSaved={handleSaved} onCancel={() => setFormFor(null)} />}
     </div>
   );
 }
