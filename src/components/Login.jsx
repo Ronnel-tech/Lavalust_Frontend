@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { login, register, errorMessage } from '../api.js';
+import ronnelImage from '../assets/ronnel.png';
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -31,6 +32,7 @@ export default function Login({ onLogin }) {
   return (
     <main className="auth-page">
       <section className="auth-visual">
+        <img src={ronnelImage} alt="Ronnel" className="auth-profile-image" />
         <div className="brand"><div className="brand-mark">P</div><div><div className="brand-name">Pallet &amp; Pine</div><div className="brand-caption">Stockroom</div></div></div>
         <div className="auth-message">
           <div className="auth-kicker">Product management system</div>
